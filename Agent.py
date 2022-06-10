@@ -234,33 +234,34 @@ class agent(nn.Module):
         s, pf, a, r, ns, npf = s_tensor, portfolio, action, reward, ns_tensor, ns_portfolio
         eps_clip = 0.1
 
-        for i in range(self.K):
-            prob_ = self.actor.sampling(s, pf)
-            pi_old = probs.view(-1, self.K + 1)[:, 1:]
-            pi_now = prob_.view(-1, self.K + 1)[:, 1:]
+        for k in range(3):
+            for i in range(self.K):
+                prob_ = self.actor.sampling(s, pf)
+                pi_old = probs.view(-1, self.K + 1)[:, 1:]
+                pi_now = prob_.view(-1, self.K + 1)[:, 1:]
 
-            ratio = pi_now[:, i]/pi_old[:, i]
+                ratio = pi_now[:, i]/pi_old[:, i]
 
-            # Critic loss
-            with torch.no_grad():
-                next_value = self.critic_target(ns[:, i], npf[:, i+1])
-                target = reward + self.discount_factor * next_value * (1-done)
+                # Critic loss
+                with torch.no_grad():
+                    next_value = self.critic_target(ns[:, i], npf[:, i+1])
+                    target = reward + self.discount_factor * next_value * (1-done)
 
-            value = self.critic(s[:, i], pf[:, i+1])
-            critic_loss = self.huber(value, target)
+                value = self.critic(s[:, i], pf[:, i+1])
+                critic_loss = self.huber(value, target)
 
-            # Actor loss
-            td_advantage = r + self.discount_factor * self.critic(ns[:, i], npf[:, i+1]) * (1-done) - value
-            td_advantage = td_advantage.detach()
-            surr1 = ratio * td_advantage
-            surr2 = torch.clamp(ratio, 1-eps_clip, 1+eps_clip) * td_advantage
-            actor_loss = -torch.min(surr1, surr2).mean()
+                # Actor loss
+                td_advantage = r + self.discount_factor * self.critic(ns[:, i], npf[:, i+1]) * (1-done) - value
+                td_advantage = td_advantage.detach()
+                surr1 = ratio * td_advantage
+                surr2 = torch.clamp(ratio, 1-eps_clip, 1+eps_clip) * td_advantage
+                actor_loss = -torch.min(surr1, surr2).mean()
 
-            # Update
-            self.loss = actor_loss + critic_loss
-            self.optimizer.zero_grad()
-            self.loss.backward()
-            self.optimizer.step()
+                # Update
+                self.loss = actor_loss + critic_loss
+                self.optimizer.zero_grad()
+                self.loss.backward()
+                self.optimizer.step()
 
     def soft_target_update(self, params, target_params):
         for param, target_param in zip(params, target_params):

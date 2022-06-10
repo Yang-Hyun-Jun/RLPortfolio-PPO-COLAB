@@ -101,62 +101,63 @@ class PPOLearner:
             cum_r = 0
             state1 = self.environment.observe()
             portfolio = self.agent.portfolio
-            while True:
-                action, confidence, probs = self.agent.get_action(torch.tensor(state1, device=device).float().view(1,self.K,-1),
-                                                                  torch.tensor(portfolio, device=device).float().view(1,self.K+1,-1))
+            while not done:
+                for _ in range(20):
+                    action, confidence, probs = self.agent.get_action(torch.tensor(state1, device=device).float().view(1,self.K,-1),
+                                                                      torch.tensor(portfolio, device=device).float().view(1,self.K+1,-1))
 
-                m_action, next_state1, next_portfolio, reward, done = self.agent.step(action, confidence)
-                steps_done += 1
+                    m_action, next_state1, next_portfolio, reward, done = self.agent.step(action, confidence)
+                    steps_done += 1
 
-                experience = (torch.tensor(state1, device=device).float().view(1,self.K,-1),
-                              torch.tensor(portfolio, device=device).float().view(1,self.K+1,-1),
-                              torch.tensor(m_action, device=device).float().view(1,-1),
-                              torch.tensor(reward, device=device).float().view(1,-1),
-                              torch.tensor(next_state1, device=device).float().view(1,self.K,-1),
-                              torch.tensor(next_portfolio, device=device).float().view(1,self.K+1,-1),
-                              torch.tensor(probs, device=device).float().view(1,-1),
-                              torch.tensor(done, device=device).float().view(1,-1))
+                    experience = (torch.tensor(state1, device=device).float().view(1,self.K,-1),
+                                  torch.tensor(portfolio, device=device).float().view(1,self.K+1,-1),
+                                  torch.tensor(m_action, device=device).float().view(1,-1),
+                                  torch.tensor(reward, device=device).float().view(1,-1),
+                                  torch.tensor(next_state1, device=device).float().view(1,self.K,-1),
+                                  torch.tensor(next_portfolio, device=device).float().view(1,self.K+1,-1),
+                                  torch.tensor(probs, device=device).float().view(1,-1),
+                                  torch.tensor(done, device=device).float().view(1,-1))
 
-                self.memory.push(experience)
-                cum_r += reward
-                state1 = next_state1
-                portfolio = next_portfolio
+                    self.memory.push(experience)
+                    cum_r += reward
+                    state1 = next_state1
+                    portfolio = next_portfolio
 
-                if done:
-                    break
+                    if steps_done % 300 == 0:
+                        np.set_printoptions(precision=4, suppress=True)
+                        a = action
+                        p = self.agent.portfolio
+                        pv = self.agent.portfolio_value
+                        sv = self.agent.portfolio_value_static
+                        cum_fee = self.agent.cum_fee
+                        stocks = self.agent.num_stocks
+                        balance = self.agent.balance
+                        change = self.agent.change
+                        pi_vector = self.agent.pi_operator(change)
+                        profitloss = self.agent.profitloss
+                        loss = self.agent.loss
+                        tex = self.agent.TRADING_TEX
+                        charge = self.agent.TRADING_CHARGE
+                        print(f"episode:{episode} ========================================================================")
+                        print(f"price:{self.environment.get_price()}")
+                        print(f"action:{a}")
+                        print(f"maction:{m_action}")
+                        print(f"gap:{a-m_action}")
+                        print(f"stocks:{stocks}")
+                        print(f"cum_fee:{cum_fee}")
+                        print(f"portfolio:{p}")
+                        print(f"pi_vector:{pi_vector}")
+                        print(f"portfolio value:{pv}")
+                        print(f"static value:{sv}")
+                        print(f"balance:{balance}")
+                        print(f"cum reward:{cum_r}")
+                        print(f"profitloss:{profitloss}")
+                        print(f"tex:{tex}")
+                        print(f"charge:{charge}")
+                        print(f"loss:{loss}")
 
-                if steps_done % 300 == 0:
-                    np.set_printoptions(precision=4, suppress=True)
-                    a = action
-                    p = self.agent.portfolio
-                    pv = self.agent.portfolio_value
-                    sv = self.agent.portfolio_value_static
-                    cum_fee = self.agent.cum_fee
-                    stocks = self.agent.num_stocks
-                    balance = self.agent.balance
-                    change = self.agent.change
-                    pi_vector = self.agent.pi_operator(change)
-                    profitloss = self.agent.profitloss
-                    loss = self.agent.loss
-                    tex = self.agent.TRADING_TEX
-                    charge = self.agent.TRADING_CHARGE
-                    print(f"episode:{episode} ========================================================================")
-                    print(f"price:{self.environment.get_price()}")
-                    print(f"action:{a}")
-                    print(f"maction:{m_action}")
-                    print(f"gap:{a-m_action}")
-                    print(f"stocks:{stocks}")
-                    print(f"cum_fee:{cum_fee}")
-                    print(f"portfolio:{p}")
-                    print(f"pi_vector:{pi_vector}")
-                    print(f"portfolio value:{pv}")
-                    print(f"static value:{sv}")
-                    print(f"balance:{balance}")
-                    print(f"cum reward:{cum_r}")
-                    print(f"profitloss:{profitloss}")
-                    print(f"tex:{tex}")
-                    print(f"charge:{charge}")
-                    print(f"loss:{loss}")
+                    if done:
+                        break
 
                 # 학습
                 if len(self.memory) >= self.batch_size:
@@ -164,6 +165,7 @@ class PPOLearner:
                     sampled_exps = self.prepare_training_inputs(sampled_exps)
                     self.agent.update(*sampled_exps)
                     self.agent.soft_target_update(self.agent.critic.parameters(), self.agent.critic_target.parameters())
+                    self.memory.clear()
 
                 #metrics 마지막 episode에 대해서만
                 if episode == range(num_episode)[-1]:
@@ -171,14 +173,14 @@ class PPOLearner:
                     metrics.profitlosses.append(self.agent.profitloss)
                     metrics.cum_fees.append(self.agent.cum_fee)
 
-            #시각화 마지막 episode에 대해서만
+            # 시각화 마지막 episode에 대해서만
             if episode == range(num_episode)[-1]:
-                #metric 계산과 저장
+                # metric 계산과 저장
                 metrics.get_profitlosses()
                 metrics.get_portfolio_values()
                 metrics.get_fees()
 
-                #계산한 metric 시각화와 저장
+                # 계산한 metric 시각화와 저장
                 Visualizer.get_portfolio_value_curve(metrics.portfolio_values)
                 Visualizer.get_profitloss_curve(metrics.profitlosses)
 

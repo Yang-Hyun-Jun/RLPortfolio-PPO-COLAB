@@ -7,6 +7,11 @@ class ReplayMemory:
         self.index = 0
         self.size = 0
 
+    def clear(self):
+        self.buffer = [None] * self.max_size
+        self.index = 0
+        self.size = 0
+
     def push(self, obj):
         self.buffer[self.index] = obj
         self.size = min(self.size + 1, self.max_size)
