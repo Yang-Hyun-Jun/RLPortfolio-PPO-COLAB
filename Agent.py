@@ -69,7 +69,7 @@ class agent(nn.Module):
         with torch.no_grad():
             self.actor.eval()
             sampled_p = self.actor.sampling(state1, portfolio)
-            sampled_p = sampled_p.numpy()
+            sampled_p = sampled_p.cpu().numpy()
             probs = sampled_p.copy()
             action = (sampled_p[0] - self.portfolio)[1:]
             confidence = abs(action)
