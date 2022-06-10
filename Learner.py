@@ -101,6 +101,7 @@ class PPOLearner:
             cum_r = 0
             state1 = self.environment.observe()
             portfolio = self.agent.portfolio
+            done = 0
             while not done:
                 for _ in range(20):
                     action, confidence, probs = self.agent.get_action(torch.tensor(state1, device=device).float().view(1,self.K,-1),
