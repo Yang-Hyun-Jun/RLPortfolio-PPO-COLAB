@@ -108,14 +108,14 @@ class PPOLearner:
                 m_action, next_state1, next_portfolio, reward, done = self.agent.step(action, confidence)
                 steps_done += 1
 
-                experience = (torch.tensor(state1).float().view(1,self.K,-1),
-                              torch.tensor(portfolio).float().view(1,self.K+1,-1),
-                              torch.tensor(m_action).float().view(1,-1),
-                              torch.tensor(reward).float().view(1,-1),
-                              torch.tensor(next_state1).float().view(1,self.K,-1),
-                              torch.tensor(next_portfolio).float().view(1,self.K+1,-1),
-                              torch.tensor(probs).float().view(1,-1),
-                              torch.tensor(done).float().view(1,-1))
+                experience = (torch.tensor(state1, device=device).float().view(1,self.K,-1),
+                              torch.tensor(portfolio, device=device).float().view(1,self.K+1,-1),
+                              torch.tensor(m_action, device=device).float().view(1,-1),
+                              torch.tensor(reward, device=device).float().view(1,-1),
+                              torch.tensor(next_state1, device=device).float().view(1,self.K,-1),
+                              torch.tensor(next_portfolio, device=device).float().view(1,self.K+1,-1),
+                              torch.tensor(probs, device=device).float().view(1,-1),
+                              torch.tensor(done, device=device).float().view(1,-1))
 
                 self.memory.push(experience)
                 cum_r += reward
