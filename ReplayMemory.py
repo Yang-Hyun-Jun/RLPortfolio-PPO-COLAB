@@ -1,5 +1,5 @@
 import random
-import torch
+
 class ReplayMemory:
     def __init__(self, max_size):
         self.buffer = [None] * max_size
@@ -21,6 +21,7 @@ class ReplayMemory:
     def sample(self, batch_size):
         # 배치 사이즈만큼 랜덤하게 인덱스 추출
         indices = random.sample(range(self.size), batch_size)
+        indices.sort()
         return [self.buffer[index] for index in indices]
 
     def __len__(self):
