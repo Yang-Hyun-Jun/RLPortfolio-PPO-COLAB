@@ -157,6 +157,15 @@ class PPOLearner:
                         print(f"charge:{charge}")
                         print(f"loss:{loss}")
 
+                    #metrics 마지막 episode에 대해서만
+                    if episode == range(num_episode)[-1]:
+                        metrics.portfolio_values.append(self.agent.portfolio_value)
+                        metrics.profitlosses.append(self.agent.profitloss)
+                        metrics.cum_fees.append(self.agent.cum_fee)
+
+                    if done:
+                        break
+
                 # 학습
                 if len(self.memory) >= self.batch_size:
                     sampled_exps = self.memory.sample(self.batch_size)
@@ -164,15 +173,6 @@ class PPOLearner:
                     self.agent.update(*sampled_exps)
                     self.agent.soft_target_update(self.agent.critic.parameters(), self.agent.critic_target.parameters())
                     self.memory.clear()
-
-                    #metrics 마지막 episode에 대해서만
-                if episode == range(num_episode)[-1]:
-                    metrics.portfolio_values.append(self.agent.portfolio_value)
-                    metrics.profitlosses.append(self.agent.profitloss)
-                    metrics.cum_fees.append(self.agent.cum_fee)
-
-                    if done:
-                        break
 
             # 시각화 마지막 episode에 대해서만
             if episode == range(num_episode)[-1]:
