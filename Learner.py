@@ -99,10 +99,10 @@ class PPOLearner:
         for episode in range(num_episode):
             self.reset()
             cum_r = 0
+            done = 0
             state1 = self.environment.observe()
             portfolio = self.agent.portfolio
-            done = 0
-            while not done:
+            while True:
                 for _ in range(20):
                     action, confidence, probs = self.agent.get_action(torch.tensor(state1, device=device).float().view(1,self.K,-1),
                                                                       torch.tensor(portfolio, device=device).float().view(1,self.K+1,-1))
@@ -159,6 +159,8 @@ class PPOLearner:
 
                     if done:
                         break
+                if done:
+                    break
 
                 # 학습
                 if len(self.memory) >= self.batch_size:
