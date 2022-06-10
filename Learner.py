@@ -102,7 +102,7 @@ class PPOLearner:
             done = 0
             state1 = self.environment.observe()
             portfolio = self.agent.portfolio
-            while True:
+            while not done:
                 for _ in range(20):
                     action, confidence, probs = self.agent.get_action(torch.tensor(state1, device=device).float().view(1,self.K,-1),
                                                                       torch.tensor(portfolio, device=device).float().view(1,self.K+1,-1))
@@ -157,11 +157,6 @@ class PPOLearner:
                         print(f"charge:{charge}")
                         print(f"loss:{loss}")
 
-                    if done:
-                        break
-                if done:
-                    break
-
                 # 학습
                 if len(self.memory) >= self.batch_size:
                     sampled_exps = self.memory.sample(self.batch_size)
@@ -170,11 +165,14 @@ class PPOLearner:
                     self.agent.soft_target_update(self.agent.critic.parameters(), self.agent.critic_target.parameters())
                     self.memory.clear()
 
-                #metrics 마지막 episode에 대해서만
+                    #metrics 마지막 episode에 대해서만
                 if episode == range(num_episode)[-1]:
                     metrics.portfolio_values.append(self.agent.portfolio_value)
                     metrics.profitlosses.append(self.agent.profitloss)
                     metrics.cum_fees.append(self.agent.cum_fee)
+
+                    if done:
+                        break
 
             # 시각화 마지막 episode에 대해서만
             if episode == range(num_episode)[-1]:
