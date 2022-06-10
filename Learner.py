@@ -31,8 +31,8 @@ class PPOLearner:
         self.chart_data = chart_data
         self.batch_size = batch_size
 
-        self.score_net_actor = Score()
-        self.score_net_critic = Score()
+        self.score_net_actor = Score().to(device)
+        self.score_net_critic = Score().to(device)
         self.actor = Actor(score_net=self.score_net_actor).to(device)
         self.critic = Critic(score_net=self.score_net_critic, header_dim=1).to(device)
         self.critic_target = Critic(score_net=self.score_net_critic, header_dim=1).to(device)
@@ -102,8 +102,8 @@ class PPOLearner:
             state1 = self.environment.observe()
             portfolio = self.agent.portfolio
             while True:
-                action, confidence, probs = self.agent.get_action(torch.tensor(state1).float().view(1,self.K,-1),
-                                                                  torch.tensor(portfolio).float().view(1,self.K+1,-1))
+                action, confidence, probs = self.agent.get_action(torch.tensor(state1, device=device).float().view(1,self.K,-1),
+                                                                  torch.tensor(portfolio, device=device).float().view(1,self.K+1,-1))
 
                 m_action, next_state1, next_portfolio, reward, done = self.agent.step(action, confidence)
                 steps_done += 1
