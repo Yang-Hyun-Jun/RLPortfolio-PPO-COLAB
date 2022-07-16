@@ -122,7 +122,7 @@ class PPOTester:
 
             metrics.profitlosses_BH.append(self.agent.profitloss)
             if done:
-                print(f"B&H{self.agent.profitloss}")
+                # print(f"B&H{self.agent.profitloss}")
                 break
 
         # metric and visualizing
@@ -141,5 +141,5 @@ class PPOTester:
         metrics.get_fees(save_path=Msave_path5)
 
         Visualizer.get_portfolio_value_curve(metrics.portfolio_values, save_path=Vsave_path2)
-        Visualizer.get_profitloss_curve(metrics.profitlosses, metrics.profitlosses_BH, save_path=Vsave_path4)
+        Visualizer.get_profitloss_curve(metrics.profitlosses, save_path=Vsave_path4)
 
