@@ -11,6 +11,14 @@ from Network import Actor
 from Network import Critic
 from Network import Score
 
+seed = 1
+
+#넘파이 랜덤 시드 고정
+np.random.seed(seed)
+#파이토치 랜덤 시드 고정
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -122,7 +130,7 @@ class PPOTester:
 
             metrics.profitlosses_BH.append(self.agent.profitloss)
             if done:
-                # print(f"B&H{self.agent.profitloss}")
+                print(f"B&H{self.agent.profitloss}")
                 break
 
         # metric and visualizing
@@ -141,5 +149,5 @@ class PPOTester:
         metrics.get_fees(save_path=Msave_path5)
 
         Visualizer.get_portfolio_value_curve(metrics.portfolio_values, save_path=Vsave_path2)
-        Visualizer.get_profitloss_curve(metrics.profitlosses, save_path=Vsave_path4)
+        Visualizer.get_profitloss_curve(metrics.profitlosses, metrics.profitlosses_BH, save_path=Vsave_path4)
 

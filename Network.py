@@ -1,6 +1,13 @@
 import torch
 import torch.nn as nn
 
+
+seed = 1
+#파이토치 랜덤 시드 고정
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 

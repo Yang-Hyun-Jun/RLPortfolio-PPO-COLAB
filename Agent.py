@@ -2,6 +2,14 @@ import torch
 import torch.nn as nn
 import numpy as np
 
+seed = 1
+#넘파이 랜덤 시드 고정
+np.random.seed(seed)
+#파이토치 랜덤 시드 고정
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
+
 
 class agent(nn.Module):
     # 거래 비용
